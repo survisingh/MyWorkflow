@@ -1,0 +1,48 @@
+name: MyNewWorkflow
+
+on:
+  workflow_dispatch:
+    inputs: 
+      deployment_name:
+        description: 'Deployment name :(Name of deployment e.g. keng01-ins01-dev)'
+        required: true
+        type: string
+      global_environment_name:
+        description: 'Environment name :(Name of environments e.g. dev,cfn,prd)' 
+        required: true
+        type: choice
+        default: 'dev'
+        options: ['dev','cfn','prd']
+      build_number:
+        description: 'Build number :(Build number to be used in deployment e.g. 114)'
+        required: true
+        type: string
+
+    permissions:
+        contents: read
+        id-token: write
+
+    jobs:
+      deploy:
+        runs-on: ubuntu-latest
+        environments: ${{ github.event.inputs.global_environment_name }}
+        steps:
+          - name: checkout repository
+            uses: actions/checkout@v4 
+          
+          - name: Set build number 
+            id: build
+            run: echo "Build number=${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+
+          - name: Show build info
+            run: |
+              echo "Deploying to ${{ github.event.inputs.global_environment_name }}"
+              echo "Build number : $BUILD_NUMBER"
+
+          - name: Deploy to selected environments
+            run: |
+              if [ "${{ github.event.inputs.global_environment_name }}" = "production"]; then
+              echo "deploying to production (build $BUILD_NUMBER)"
+              else
+              echo "deploying to stg (build $BUILD_NUMBER)"
+              fi 
